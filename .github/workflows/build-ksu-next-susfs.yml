@@ -68,6 +68,7 @@ jobs:
           sed -i 's/global_zone_page_state(NR_IONCACHE_PAGES)/0/g' drivers/staging/android/ion/ion_system_heap.c || true
           sed -i 's/strnstr(dev_name(dev), "mdp")/strnstr(dev_name(dev), "mdp", strlen(dev_name(dev)))/' drivers/gpu/drm/msm/msm_drv.c || true
           sed -i 's/obj-$(CONFIG_DRM_MSM) += msm\//\#obj-$(CONFIG_DRM_MSM) += msm\//g' drivers/gpu/drm/Makefile || true
+          sed -i 's/obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_TCM)/\#obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_TCM)/g' drivers/input/touchscreen/Makefile || true
 
       - name: Copy SUSFS kernel files
         run: |
