@@ -386,6 +386,8 @@ jobs:
           scripts/config --file out/.config -e KSU_SUSFS_OPEN_REDIRECT
           scripts/config --file out/.config -e KALLSYMS
           scripts/config --file out/.config -e KALLSYMS_ALL
+          scripts/config --file out/.config -d BPF_PRELOAD
+          scripts/config --file out/.config -d BPF_PRELOAD_UMD
           make O=out ARCH=arm64 olddefconfig
           grep -E "CONFIG_KSU" out/.config | head -30
 
