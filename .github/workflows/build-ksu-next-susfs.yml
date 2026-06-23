@@ -365,6 +365,7 @@ jobs:
             echo "Hook script not found!"
             exit 1
           fi
+          sed -i 's/ksu_handle_sys_reboot/\/\/ksu_handle_sys_reboot/g' kernel/reboot.c || true
 
       - name: Use Device Config
         run: |
@@ -379,6 +380,7 @@ jobs:
           scripts/config --file out/.config -e KSU
           scripts/config --file out/.config -e KSU_SUSFS
           scripts/config --file out/.config -e KSU_SUSFS_SUS_PATH
+          scripts/config --file out/.config -e DRM_OPLUS_NOTIFY
           scripts/config --file out/.config -e KSU_SUSFS_SUS_MOUNT
           scripts/config --file out/.config -e KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
           scripts/config --file out/.config -e KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
