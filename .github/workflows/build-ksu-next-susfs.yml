@@ -66,6 +66,7 @@ jobs:
           sed -i '1i struct smb_charger;' drivers/power/supply/qcom/schgm-flash.h || true
           sed -i '/#include "schgm-flash.h"/a #include "smb5-lib.h"' drivers/power/supply/qcom/schgm-flash.c || true
           sed -i 's/global_zone_page_state(NR_IONCACHE_PAGES)/0/g' drivers/staging/android/ion/ion_system_heap.c || true
+          sed -i 's/strnstr(dev_name(dev), "mdp")/strnstr(dev_name(dev), "mdp", strlen(dev_name(dev)))/' drivers/gpu/drm/msm/msm_drv.c || true
 
       - name: Copy SUSFS kernel files
         run: |
@@ -87,6 +88,9 @@ jobs:
             echo "Adding susfs.o to fs/Makefile..."
             sed -i '/^obj-y.*:=/a obj-$(CONFIG_KSU_SUSFS) += susfs.o' fs/Makefile
           fi
+          # Fix alloc_vfsmnt missing arguments due to 5.1 mount API backports in 4.19
+          sed -i 's/mnt = alloc_vfsmnt(fc->source ?: "none");/mnt = alloc_vfsmnt(fc->source ?: "none", false, 0);/' fs/namespace.c || true
+          sed -i 's/mnt = alloc_vfsmnt(old->mnt_devname);/mnt = alloc_vfsmnt(old->mnt_devname, false, 0);/' fs/namespace.c || true
 
       - name: Backport path_umount and get_cred_rcu
         run: |
