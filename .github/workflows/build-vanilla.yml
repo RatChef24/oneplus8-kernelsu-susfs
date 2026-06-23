@@ -75,7 +75,7 @@ jobs:
           cd AnyKernel3
           rm -rf .git modules patch ramdisk
           cp ../out/arch/arm64/boot/Image .
-          sed -i 's/do.devicecheck=.*/do.devicecheck=1/g' anykernel.sh
+          sed -i 's/do.devicecheck=.*/do.devicecheck=0/g' anykernel.sh
           sed -i 's/device.name1=.*/device.name1=instantnoodlep/g' anykernel.sh
           sed -i 's|BLOCK=.*|BLOCK=/dev/block/bootdevice/by-name/boot;|g' anykernel.sh
           sed -i 's/IS_SLOT_DEVICE=.*/IS_SLOT_DEVICE=1;/g' anykernel.sh
