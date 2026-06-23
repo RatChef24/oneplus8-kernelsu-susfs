@@ -167,6 +167,14 @@ jobs:
           echo "Setting up KernelSU (original repo - compatible with SUSFS patch)..."
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
           if [ ! -d "drivers/kernelsu" ]; then
+            echo "ERROR: KernelSU setup failed!"
+            exit 1
+          fi
+          ls -la drivers/kernelsu/
+          echo "KernelSU version:"
+          cat drivers/kernelsu/Makefile | head -20
+          # Verify core_hook.c exists (required by SUSFS patch)
+          ls -la drivers/kernelsu/../kernel/core_hook.c 2>/dev/null || ls -la $(readlink -f drivers/kernelsu)/core_hook.c 2>/dev/null || echo "Warning: core_hook.c not found"
 
       - name: Apply SUSFS patch to KernelSU
         run: |
