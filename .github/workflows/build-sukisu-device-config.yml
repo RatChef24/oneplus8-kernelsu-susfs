@@ -181,8 +181,8 @@ jobs:
           cp ../out/arch/arm64/boot/Image .
           sed -i 's/do.devicecheck=.*/do.devicecheck=1/g' anykernel.sh
           sed -i 's/device.name1=.*/device.name1=instantnoodlep/g' anykernel.sh
-          sed -i 's|block=.*|block=/dev/block/bootdevice/by-name/boot;|g' anykernel.sh
-          sed -i 's/is_slot_device=.*/is_slot_device=1;/g' anykernel.sh
+          sed -i 's|BLOCK=.*|BLOCK=/dev/block/bootdevice/by-name/boot;|g' anykernel.sh
+          sed -i 's/IS_SLOT_DEVICE=.*/IS_SLOT_DEVICE=1;/g' anykernel.sh
 
           ZIP_NAME="SukiSU_OnePlus8Pro_$(date +%Y%m%d).zip"
           zip -r9 "$GITHUB_WORKSPACE/$ZIP_NAME" * -x .git README.md *placeholder
