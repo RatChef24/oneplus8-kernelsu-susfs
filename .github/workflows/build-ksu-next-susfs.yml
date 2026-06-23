@@ -165,16 +165,26 @@ jobs:
         run: |
           cd kernel
           echo "Setting up KernelSU (original repo - compatible with SUSFS patch)..."
-          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
+          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" -o /tmp/ksu_setup.sh
+          chmod +x /tmp/ksu_setup.sh
+          bash /tmp/ksu_setup.sh v0.9.5
           if [ ! -d "drivers/kernelsu" ]; then
             echo "ERROR: KernelSU setup failed!"
             exit 1
           fi
           ls -la drivers/kernelsu/
           echo "KernelSU version:"
-          cat drivers/kernelsu/Makefile | head -20
+          head -20 drivers/kernelsu/Makefile
           # Verify core_hook.c exists (required by SUSFS patch)
-          ls -la drivers/kernelsu/../kernel/core_hook.c 2>/dev/null || ls -la $(readlink -f drivers/kernelsu)/core_hook.c 2>/dev/null || echo "Warning: core_hook.c not found"
+          KSU_RESOLVED=$(readlink -f drivers/kernelsu)
+          echo "KernelSU resolved path: $KSU_RESOLVED"
+          ls -la "$KSU_RESOLVED/" | head -20
+          if [ -f "$KSU_RESOLVED/core_hook.c" ]; then
+            echo "core_hook.c found at $KSU_RESOLVED/core_hook.c"
+          else
+            echo "Warning: core_hook.c not found at expected path"
+            find $(dirname "$KSU_RESOLVED") -name core_hook.c 2>/dev/null || true
+          fi
 
       - name: Apply SUSFS patch to KernelSU
         run: |
@@ -217,14 +227,35 @@ jobs:
         run: |
           cd kernel
           KSU_DIR=$(readlink -f drivers/kernelsu)
+          echo "KSU_DIR resolved to: $KSU_DIR"
+
+          # Find core_hook.c dynamically
+          CORE_HOOK="$KSU_DIR/core_hook.c"
+          if [ ! -f "$CORE_HOOK" ]; then
+            echo "core_hook.c not at $CORE_HOOK, searching..."
+            CORE_HOOK=$(find "$(dirname $KSU_DIR)" -name core_hook.c -type f | head -1)
+            if [ -z "$CORE_HOOK" ]; then
+              echo "ERROR: core_hook.c not found anywhere in KernelSU tree!"
+              find "$(dirname $KSU_DIR)" -type f -name '*.c' -o -name '*.h' | head -30
+              exit 1
+            fi
+            echo "Found core_hook.c at: $CORE_HOOK"
+          fi
 
           # Check if SUSFS was properly integrated
           if ! grep -q "CONFIG_KSU_SUSFS" "$KSU_DIR/Kconfig"; then
             echo "SUSFS patch may have failed, adding manual integration..."
 
             # Add SUSFS include to core_hook.c if not present
-            if ! grep -q "#include <linux/susfs.h>" "$KSU_DIR/core_hook.c"; then
-              sed -i '/#include "throne_tracker.h"/a #ifdef CONFIG_KSU_SUSFS\n#include <linux\/susfs.h>\n#endif' "$KSU_DIR/core_hook.c"
+            if ! grep -q "#include <linux/susfs.h>" "$CORE_HOOK"; then
+              if grep -q '#include "throne_tracker.h"' "$CORE_HOOK"; then
+                sed -i '/#include "throne_tracker.h"/a #ifdef CONFIG_KSU_SUSFS\n#include <linux\/susfs.h>\n#endif' "$CORE_HOOK"
+              elif grep -q '#include "ksu.h"' "$CORE_HOOK"; then
+                sed -i '/#include "ksu.h"/a #ifdef CONFIG_KSU_SUSFS\n#include <linux\/susfs.h>\n#endif' "$CORE_HOOK"
+              else
+                sed -i '1i #ifdef CONFIG_KSU_SUSFS\n#include <linux\/susfs.h>\n#endif' "$CORE_HOOK"
+              fi
+              echo "Added SUSFS include to core_hook.c"
             fi
 
             # Add basic SUSFS Kconfig if not present
@@ -304,7 +335,7 @@ jobs:
           echo "=== Final Kconfig check ==="
           grep -A5 "KSU_SUSFS" "$KSU_DIR/Kconfig" | head -20
           echo "=== Final core_hook.c check ==="
-          grep -c "susfs" "$KSU_DIR/core_hook.c" || echo "0 susfs references"
+          grep -c "susfs" "$CORE_HOOK" || echo "0 susfs references"
 
       - name: Disable kprobes and enable manual hooks
         run: |
