@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 env:
-  KERNEL_SOURCE: https://github.com/LineageOS/android_kernel_oneplus_sm8250.git
-  KERNEL_BRANCH: lineage-23.0
+  KERNEL_SOURCE: https://github.com/The-Anomalist/Singularity.git
+  KERNEL_BRANCH: Evolved
 
 jobs:
   build:
@@ -109,6 +109,12 @@ jobs:
           grep "susfs" fs/Makefile
           echo "SUSFS version:"
           grep "SUSFS_VERSION" include/linux/susfs.h 2>/dev/null || echo "Version not found"
+
+      - name: Disable GPU Overclock
+        run: |
+          cd kernel
+          echo "Capping GPU max freq to 587MHz to prevent PMIC crashes..."
+          sed -i -E 's/<(938000000|840000000|760000000|670000000)>/<587000000>/g' arch/arm64/boot/dts/vendor/qcom/*gpu*.dtsi
 
       - name: Backport path_umount and get_cred_rcu
         run: |
