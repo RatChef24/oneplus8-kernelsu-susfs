@@ -278,6 +278,26 @@ jobs:
           echo "Checking KSU, SUSFS, and KPM config:"
           grep -E "CONFIG_KSU|CONFIG_THREAD_INFO|CONFIG_KPM" out/.config | head -40
 
+      - name: Apply Performance & Network Tweaks to Config
+        run: |
+          cd kernel
+          # Enable BBR TCP Congestion Control
+          scripts/config --file out/.config -e TCP_CONG_BBR
+          scripts/config --file out/.config --set-str DEFAULT_TCP_CONG "bbr"
+          
+          # Set HZ to 300 for better UI responsiveness
+          scripts/config --file out/.config -d HZ_250
+          scripts/config --file out/.config -e HZ_300
+          scripts/config --file out/.config --set-val HZ 300
+          
+          # Disable kernel debugging to reduce overhead and size
+          scripts/config --file out/.config -d DEBUG_KERNEL
+          scripts/config --file out/.config -d DEBUG_INFO
+          scripts/config --file out/.config -d DEBUG_LIST
+          scripts/config --file out/.config -d DEBUG_BUGVERBOSE
+          
+          make O=out ARCH=arm64 olddefconfig
+
       - name: Build Kernel
         run: |
           cd kernel
